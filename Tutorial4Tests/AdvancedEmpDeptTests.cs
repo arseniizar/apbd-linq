@@ -142,7 +142,6 @@ public class AdvancedEmpDeptTests
             .Where(jd => jd.Emp.Sal >= jd.GradeInfo.Losal && jd.Emp.Sal <= jd.GradeInfo.Hisal)
             .Select(final => new { final.Emp.EName, final.Dept.DName, final.GradeInfo.Grade })
             .ToList();
-        ;
 
         Assert.Contains(result, r => r.EName == "ALLEN" && r.DName == "SALES" && r.Grade == 3);
     }
