@@ -98,9 +98,11 @@ public class EmpDeptSalgradeTests
     {
         var emps = Database.GetEmps();
 
-        // var result = null; 
-        //
-        // Assert.All(result, r => Assert.NotNull(r.Comm));
+        var result = emps.Where(e => e.Comm.HasValue)
+            .Select(e => new { e.EName, e.Comm })
+            .ToList();
+
+        Assert.All(result, r => Assert.NotNull(r.Comm));
     }
 
     // 8. Join with Salgrade
@@ -111,9 +113,12 @@ public class EmpDeptSalgradeTests
         var emps = Database.GetEmps();
         var grades = Database.GetSalgrades();
 
-        // var result = null;
-        //
-        // Assert.Contains(result, r => r.EName == "ALLEN" && r.Grade == 3);
+        var result = emps.Join(grades, e => 1, g => 1, (e, g) => new { e, g })
+            .Where(pair => pair.e.Sal >= pair.g.Losal && pair.e.Sal <= pair.g.Hisal)
+            .Select(pair => new { pair.e.EName, pair.g.Grade })
+            .ToList();
+
+        Assert.Contains(result, r => r.EName == "ALLEN" && r.Grade == 3);
     }
 
     // 9. Aggregation (AVG)
@@ -123,9 +128,11 @@ public class EmpDeptSalgradeTests
     {
         var emps = Database.GetEmps();
 
-        // var result = null; 
-        //
-        // Assert.Contains(result, r => r.DeptNo == 30 && r.AvgSal > 1000);
+        var result = emps.GroupBy(e => e.DeptNo)
+            .Select(g => new { DeptNo = g.Key, AvgSal = g.Average(e => e.Sal) })
+            .ToList();
+
+        Assert.Contains(result, r => r.DeptNo == 30 && r.AvgSal > 1000);
     }
 
     // 10. Complex filter with subquery and join
@@ -135,8 +142,14 @@ public class EmpDeptSalgradeTests
     {
         var emps = Database.GetEmps();
 
-        // var result = null; 
-        //
-        // Assert.Contains("ALLEN", result);
+        var result = emps.Where(e => e.Sal > (
+                emps.GroupBy(emp => emp.DeptNo)
+                    .Select(g => new {DeptNo = g.Key, AvgSal = g.Average(emp => emp.Sal)})
+                    .ToDictionary(d => d.DeptNo, d => d.AvgSal)
+                )[e.DeptNo])
+            .Select(e => e.EName)
+            .ToList(); 
+        
+        Assert.Contains("ALLEN", result);
     }
 }
